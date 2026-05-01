@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEEBOT AU — Spec Compare 2025</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#080809;--surf:#0f0f12;--surf2:#161619;--brd:#1d1d24;--brd2:#29293a;
+  --text:#f0f0fa;--text2:#a0a0c0;--text3:#5c5c7a;
+  --acc:#00e5a0;--acc2:#00b880;--warn:#ff7070;
+  --mono:'DM Mono',monospace;--sans:'Syne',sans-serif;
+  --x11:#c084fc;--x8:#818cf8;--t90:#34d399;--t80:#fbbf24;--t50:#f97316;--t30s:#e879f9;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:var(--mono);font-size:14px;line-height:1.5}
+.hdr{position:sticky;top:0;z-index:200;background:rgba(8,8,9,.96);backdrop-filter:blur(14px);border-bottom:1px solid var(--brd)}
+.hdr-top{display:flex;align-items:center;gap:14px;padding:14px 20px 12px}
+.hdr-title{font-family:var(--sans);font-size:19px;font-weight:800;letter-spacing:-.03em}
+.hdr-title span{color:var(--acc)}
+.hdr-sub{font-size:11px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-top:2px}
+.tabs{display:flex;gap:2px;padding:0 20px;background:var(--surf);border-bottom:1px solid var(--brd)}
+.tab{font-family:var(--mono);font-size:12px;padding:10px 16px;background:none;border:none;color:var(--text2);cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.04em;transition:color .12s}
+.tab:hover{color:var(--text)}
+.tab.active{color:var(--acc);border-bottom-color:var(--acc)}
+.ctrl{display:flex;align-items:center;gap:8px;padding:10px 20px;border-bottom:1px solid var(--brd);flex-wrap:wrap;background:var(--bg)}
+.ctrl-label{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+.pill{font-family:var(--mono);font-size:11px;padding:5px 11px;border-radius:3px;border:1px solid var(--brd2);background:none;color:var(--text2);cursor:pointer;transition:all .1s;letter-spacing:.03em;white-space:nowrap}
+.pill:hover{border-color:var(--text2);color:var(--text)}
+.pill.active{background:var(--acc);border-color:var(--acc);color:#000;font-weight:500}
+.pill[data-fam=X11].active{background:var(--x11);border-color:var(--x11)}
+.pill[data-fam=X8].active{background:var(--x8);border-color:var(--x8)}
+.pill[data-fam=T90].active{background:var(--t90);border-color:var(--t90)}
+.pill[data-fam=T80].active{background:var(--t80);border-color:var(--t80)}
+.pill[data-fam=T50].active{background:var(--t50);border-color:var(--t50)}
+.pill[data-fam=T30S].active{background:var(--t30s);border-color:var(--t30s)}
+.sep{width:1px;height:18px;background:var(--brd2);flex-shrink:0}
+.sel-info{margin-left:auto;font-size:12px;color:var(--text2)}
+.sel-info strong{color:var(--acc)}
+.btn-cmp{font-family:var(--mono);font-size:12px;padding:5px 13px;border-radius:3px;border:1px solid var(--acc2);background:none;color:var(--acc);cursor:pointer;transition:all .12s;white-space:nowrap}
+.btn-cmp:hover:not(:disabled){background:var(--acc);color:#000}
+.btn-cmp:disabled{opacity:.3;cursor:default}
+.btn-clr{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:3px;border:1px solid var(--brd2);background:none;color:var(--text3);cursor:pointer;transition:all .1s}
+.btn-clr:hover{color:var(--text2)}
+.sortbar{display:flex;align-items:center;gap:6px;padding:8px 20px;border-bottom:1px solid var(--brd);overflow-x:auto;background:var(--surf)}
+.sortbar-lbl{font-size:11px;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+.srt{font-family:var(--mono);font-size:11px;padding:4px 10px;border-radius:2px;border:1px solid var(--brd);background:none;color:var(--text3);cursor:pointer;white-space:nowrap;transition:all .1s}
+.srt:hover{color:var(--text2);border-color:var(--brd2)}
+.srt.active{border-color:var(--acc2);color:var(--acc)}
+.srt.active::after{content:' ↓'}
+.srt.active.asc::after{content:' ↑'}
+
+/* GRID */
+#view-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:8px;padding:16px 20px}
+.card{background:var(--surf);border:1px solid var(--brd);border-radius:4px;padding:14px;cursor:pointer;transition:border-color .12s,transform .1s;position:relative;display:flex;flex-direction:column}
+.card:hover{border-color:var(--brd2);transform:translateY(-1px)}
+.card.sel{border-color:var(--acc2);background:rgba(0,229,160,.03)}
+.card-check{position:absolute;top:10px;right:10px;width:16px;height:16px;border:1px solid var(--brd2);border-radius:2px;display:flex;align-items:center;justify-content:center;font-size:10px;color:transparent}
+.card.sel .card-check{background:var(--acc);border-color:var(--acc);color:#000}
+.card-fam{font-size:10px;text-transform:uppercase;letter-spacing:.1em;font-weight:500;margin-bottom:5px}
+.card-name{font-family:var(--sans);font-size:14px;font-weight:700;letter-spacing:-.02em;line-height:1.2;margin-bottom:10px}
+.card-row{display:flex;justify-content:space-between;align-items:baseline;gap:6px;padding:4px 0;border-bottom:1px solid rgba(255,255,255,.04)}
+.ck{font-size:11px;color:var(--text2)}
+.cv{font-size:12px;font-weight:500;text-align:right}
+.cv.best{color:var(--acc)}
+.bar{height:2px;background:var(--brd);border-radius:1px;margin:5px 0 8px;overflow:hidden}
+.bar-fill{height:100%;background:var(--acc);border-radius:1px}
+.card-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:9px}
+.tag{font-size:10px;padding:2px 7px;border-radius:2px;background:var(--surf2);border:1px solid var(--brd2);color:var(--text2)}
+.tag.g{background:rgba(0,229,160,.07);border-color:rgba(0,229,160,.2);color:var(--acc)}
+.tag.p{background:rgba(251,191,36,.07);border-color:rgba(251,191,36,.2);color:#fbbf24}
+.card-link{font-size:10px;color:var(--text3);text-decoration:none;margin-top:7px;display:block}
+.card-link:hover{color:var(--acc)}
+
+/* LIST */
+#view-list{padding:12px 20px;overflow-x:auto}
+.list-table{width:100%;min-width:960px;border-collapse:collapse}
+.list-table th{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--text3);padding:9px 13px;text-align:left;border-bottom:2px solid var(--brd2);white-space:nowrap;cursor:pointer;background:var(--surf);position:sticky;top:0}
+.list-table th:hover{color:var(--text2)}
+.list-table th.as{color:var(--acc)}
+.list-table th.as::after{content:' ↓'}
+.list-table th.as.asc::after{content:' ↑'}
+.list-table td{padding:9px 13px;border-bottom:1px solid var(--brd);font-size:13px;white-space:nowrap;vertical-align:middle}
+.list-table tr:hover td{background:rgba(255,255,255,.02)}
+.list-table tr.sel td{background:rgba(0,229,160,.04)}
+.list-table tr{cursor:pointer}
+.lt-fam{font-size:10px;text-transform:uppercase;letter-spacing:.08em;font-weight:500}
+.lt-name{font-family:var(--sans);font-size:14px;font-weight:700;letter-spacing:-.02em}
+.lt-price{color:#fbbf24}
+.lt-best{color:var(--acc);font-weight:500}
+.lt-y{color:var(--acc)}.lt-n{color:var(--text3)}
+.lt-a{color:var(--text3);text-decoration:none;font-size:11px}
+.lt-a:hover{color:var(--acc)}
+
+/* COMPARE */
+#view-compare{padding:12px 20px;overflow-x:auto}
+.cmp-empty{padding:60px 20px;text-align:center;color:var(--text3);font-size:14px}
+.cmp-table{min-width:500px;border-collapse:collapse}
+.cmp-table th,.cmp-table td{padding:8px 18px;text-align:left;border-bottom:1px solid var(--brd);vertical-align:top}
+.cmp-table thead th{background:var(--surf);position:sticky;top:0;z-index:10;white-space:nowrap}
+.cmp-table thead th:first-child{font-family:var(--mono);font-size:11px;font-weight:400;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;min-width:185px}
+.cmp-table thead th.mc{font-family:var(--sans);font-size:14px;font-weight:700;letter-spacing:-.02em;min-width:160px}
+.fam-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:5px;vertical-align:middle}
+.cmp-table tbody tr:hover{background:rgba(255,255,255,.015)}
+.cmp-table tbody tr.sh td{font-size:10px;text-transform:uppercase;letter-spacing:.13em;color:var(--text3);background:var(--bg);padding:14px 18px 4px;border-bottom:none}
+.cmp-table tbody td:first-child{color:var(--text2);font-size:12px;white-space:nowrap}
+.cmp-table td.v{font-size:13px}
+.cmp-table td.v.best{color:var(--acc);font-weight:500}
+.cmp-table td.v.worst{color:var(--warn);opacity:.75}
+.cmp-table td.v.na{color:var(--text3)}
+.y{color:var(--acc)}.n{color:var(--text3)}
+
+footer{padding:12px 20px;border-top:1px solid var(--brd);font-size:10px;color:var(--text3);letter-spacing:.04em;display:flex;justify-content:space-between;flex-wrap:wrap;gap:6px;margin-top:20px}
+::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:3px}
+.empty-msg{grid-column:1/-1;padding:40px;text-align:center;color:var(--text3)}
+/* sort badge in list headers */
+.sort-n{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:2px;background:var(--acc);color:#000;font-size:9px;font-weight:700;margin-left:4px;vertical-align:middle}
+.list-table th.as{color:var(--acc)}
+.list-table th.as::after{content:' ↓'}
+.list-table th.as.asc::after{content:' ↑'}
+/* shift-hint */
+.sort-hint{font-size:10px;color:var(--text3);padding:4px 20px 0;font-style:italic}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-top">
+    <div>
+      <div class="hdr-title">DEEBOT <span>AU</span></div>
+      <div class="hdr-sub">11 models · 2025 · Spec comparison</div>
+    </div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-view="grid">Grid</button>
+    <button class="tab" data-view="list">List</button>
+    <button class="tab" data-view="compare">Compare</button>
+  </div>
+  <div class="ctrl">
+    <span class="ctrl-label">Family</span>
+    <button class="pill active" data-fam="ALL">All</button>
+    <button class="pill" data-fam="X11">X11</button>
+    <button class="pill" data-fam="X8">X8</button>
+    <button class="pill" data-fam="T90">T90</button>
+    <button class="pill" data-fam="T80">T80</button>
+    <button class="pill" data-fam="T50">T50</button>
+    <button class="pill" data-fam="T30S">T30S</button>
+    <div class="sep"></div>
+    <div class="sel-info"><strong id="sel-n">0</strong> selected</div>
+    <button class="btn-clr" id="btn-clr">Clear</button>
+    <button class="btn-cmp" id="btn-go-compare" disabled>Compare selected →</button>
+  </div>
+  <div class="sortbar">
+    <span class="sortbar-lbl">Sort</span>
+    <button class="srt active" data-sort="family">Family</button>
+    <button class="srt" data-sort="price_aud">Price</button>
+    <button class="srt" data-sort="release_year">Year</button>
+    <button class="srt" data-sort="suction_pa">Suction</button>
+    <button class="srt" data-sort="runtime_min">Run time</button>
+    <button class="srt" data-sort="battery_mah">Battery</button>
+    <button class="srt" data-sort="robot_weight_kg">Weight</button>
+    <button class="srt" data-sort="mop_diameter_mm">Mop Ø</button>
+    <button class="srt" data-sort="dust_bin_ml">Dust bin</button>
+    <button class="srt" data-sort="charge_h">Charge time</button>
+  </div>
+</div>
+
+<div style="background:rgba(255,112,112,.07);border-bottom:1px solid rgba(255,112,112,.2);padding:7px 20px;font-size:11px;color:#c07070;display:flex;gap:16px;flex-wrap:wrap">
+  <span>⚠ <strong style="color:#ff9090">X8 PRO OMNI</strong>: No official Ecovacs AU listing. JB Hi-Fi and Good Guys are selling the US-spec unit (110V heating module). Specs sourced from ecovacs.com/us. Confirm AU warranty before purchasing.</span>
+  <span style="color:var(--text3)">· T50 MAX PRO OMNI removed — discontinued in AU.</span>
+</div>
+
+<div id="view-grid"></div>
+<div id="view-list" style="display:none">
+  <div class="sort-hint">Click column header to sort · Shift+click to add secondary sorts</div>
+  <div style="padding:0 20px;overflow-x:auto"><table class="list-table"><thead id="lh"></thead><tbody id="lb"></tbody></table></div>
+</div>
+<div id="view-compare" style="display:none"></div>
+
+<footer>
+  <span>Specs: ecovacs.com/au · Prices verified May 2025 · T50 MAX PRO OMNI discontinued AU</span>
+  <span>X8 PRO OMNI specs via ecovacs.com/us · Release years approximate</span>
+</footer>
+
+<script>
+// Per-retailer prices (AUD, incl. current discounts). null = not stocked.
+// Retailers: ecovacs, jb, hn (Harvey Norman), gg (Good Guys)
+const PRICES={
+  'X11 OmniCyclone': {ecovacs:1795, jb:1999,  hn:1798},
+  'X11 PRO OMNI':    {ecovacs:1699,            hn:1798},
+  'X8 PRO OMNI':     {              jb:1248,   gg:1249},
+  'X8 MAX PRO OMNI': {ecovacs:1599},
+  'T90 PRO OMNI':    {ecovacs:1999, jb:1999,   gg:1995},
+  'T90 OMNI':        {ecovacs:1849},
+  'T80S OMNI':       {ecovacs:1799, jb:1799,   hn:1799},
+  'T80 OMNI':        {ecovacs:1148,             hn:1148},
+  'T50 PRO OMNI':    {ecovacs:749,  jb:749,    hn:747},
+  'T50 OMNI':        {ecovacs:699},
+  'T30S PRO':        {ecovacs:599},
+};
+const RETAILER_URLS={
+  'X11 OmniCyclone': {ecovacs:'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-x11-omnicyclone', jb:'https://www.jbhifi.com.au/products/ecovacs-x11-omnicyclone-robotic-vacuum-cleaner', hn:'https://www.harveynorman.com.au/ecovacs-deebot-x11-omnicyclone-vacuum-mop-matte-black.html'},
+  'X11 PRO OMNI':    {ecovacs:'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-x11-pro-omni', hn:'https://www.harveynorman.com.au/ecovacs-x11-pro-omni-robot-vacuum-and-mop-black-and-silver.html'},
+  'X8 PRO OMNI':     {jb:'https://www.jbhifi.com.au/products/ecovacs-deebot-x8-pro-omni-robotic-vacuum-cleaner-black', gg:'https://www.thegoodguys.com.au/ecovacs-deebot-x8-pro-omni-robotic-vacuum-deebot-x8-pro-omni-b'},
+  'X8 MAX PRO OMNI': {ecovacs:'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-x8-max-pro-omni-black'},
+  'T90 PRO OMNI':    {ecovacs:'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t90-pro-omni', jb:'https://www.jbhifi.com.au/products/ecovacs-deebot-t90-pro-omni-vacuum-cleaner', gg:'https://www.thegoodguys.com.au/ecovacs-deebot-t90-pro-omni-robotic-vacuum-dex95'},
+  'T90 OMNI':        {ecovacs:'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t90-omni'},
+  'T80S OMNI':       {ecovacs:'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t80s-omni', jb:'https://www.jbhifi.com.au/products/ecovacs-deebot-t80s-omni-vacuum-cleaner', hn:'https://www.harveynorman.com.au/ecovac-deebot-t80s-omni-robot-vacuum-and-mop-black.html'},
+  'T80 OMNI':        {ecovacs:'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t80-omni-white', hn:'https://www.harveynorman.com.au/ecovacs-deebot-t80-omni-robot-vacuum-cleaner-white.html'},
+  'T50 PRO OMNI':    {ecovacs:'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t50-pro-omni-black', jb:'https://www.jbhifi.com.au/products/ecovacs-deebot-t50-pro-omni-robotic-vac-black', hn:'https://www.harveynorman.com.au/ecovacs-deebot-t50-pro-omni-robotic-vacuum-and-mop-black.html'},
+  'T50 OMNI':        {ecovacs:'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t50-omni-white'},
+  'T30S PRO':        {ecovacs:'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t30s-pro-white'},
+};
+const RETAILER_LABELS={ecovacs:'Ecovacs',jb:'JB Hi-Fi',hn:'Harvey Norman',gg:'Good Guys'};
+function getBestPrice(name){
+  const p=PRICES[name];if(!p)return null;
+  let best=null,retailer=null;
+  for(const [r,v] of Object.entries(p)){if(best===null||v<best){best=v;retailer=r}}
+  return{price:best,retailer,label:RETAILER_LABELS[retailer]||retailer,url:RETAILER_URLS[name]?.[retailer]||null};
+}
+
+const SPEC_URLS={'X11 OmniCyclone':'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-x11-omnicyclone#specification','X11 PRO OMNI':'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-x11-pro-omni#specification','X8 MAX PRO OMNI':'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-x8-max-pro-omni-black#specification','X8 PRO OMNI':'https://www.ecovacs.com/us/deebot-robotic-vacuum-cleaner/deebot-x8-pro-omni#specification','T90 PRO OMNI':'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t90-pro-omni#specification','T90 OMNI':'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t90-omni#specification','T80S OMNI':'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t80s-omni#specification','T80 OMNI':'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t80-omni-white#specification','T50 PRO OMNI':'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t50-pro-omni-black#specification','T50 OMNI':'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t50-omni-white#specification','T30S PRO':'https://www.ecovacs.com/au/deebot-robotic-vacuum-cleaner/deebot-t30s-pro-white#specification'};
+const RELEASE_YEARS={'X11 OmniCyclone':2025,'X11 PRO OMNI':2024,'X8 MAX PRO OMNI':2024,'X8 PRO OMNI':2023,'T90 PRO OMNI':2025,'T90 OMNI':2025,'T80S OMNI':2025,'T80 OMNI':2024,'T50 MAX PRO OMNI':2025,'T50 PRO OMNI':2024,'T50 OMNI':2024,'T30S PRO':2023};
+const FAM_ORDER=['X11','X8','T90','T80','T50','T30S'];
+const FAM_COL={X11:'var(--x11)',X8:'var(--x8)',T90:'var(--t90)',T80:'var(--t80)',T50:'var(--t50)',T30S:'var(--t30s)'};
+
+/* ── TIER SYSTEMS ─────────────────────────── */
+// t:1=best (gold), t:2=green, t:3=blue, t:4=neutral, t:5=red/worst
+const TIER_C=['','#fbbf24','#00e5a0','#818cf8','#a0a0c0','#ff7070'];
+
+const NAV_TIERS={
+  'Mini-ToF':                {t:1, note:'Best close-range precision'},
+  'TrueMapping 2.0 (dToF)': {t:2, note:'Premium Ecovacs algorithm'},
+  'dToF LiDAR':              {t:3, note:'Standard dToF'},
+  'dToF':                    {t:3, note:'Standard dToF'},
+  'dToF (ZJ2515)':           {t:5, note:'Older chip'},
+};
+// Mop system — T90 upgraded to OZMO ROLLER 3.0, T80S confirmed as OZMO ROLLER 2.0 (from key features doc)
+const MOP_TIERS={
+  'OZMO ROLLER 3.0': {t:1, note:'27cm wide, 200 RPM, 16-nozzle pressurised wash'},
+  'OZMO ROLLER 2.0': {t:2, note:'200–220 RPM self-washing roller, hot water'},
+  'OZMO ROLLER':     {t:3, note:'Standard roller mop'},
+  'OZMO Turbo 2.0':  {t:4, note:'Spinning dual mop pads'},
+};
+const FILTER_TIERS={
+  'F9':{t:1, note:'HEPA-equivalent'},
+  'M6':{t:3, note:'High-efficiency, non-HEPA'},
+};
+const AIVI_TIERS={
+  '4.0':{t:1, note:'Latest gen — T90 series exclusive'},
+  '3.0':{t:2, note:'Current gen AI object avoidance'},
+  '2.0':{t:3, note:'Previous gen'},
+};
+const TRUEDGE_TIERS={
+  '3.0':{t:1, note:'1.5 cm air-cushion roller extension'},
+  '2.0':{t:2, note:'3D Edge Sensor hardware'},
+  '1.0':{t:3, note:'1 mm proximity edge coverage'},
+};
+const ZTANGLE_TIERS={
+  '3.0':{t:1, note:'Main brush + side brush both protected'},
+  '2.0':{t:2, note:'Main brush anti-tangle'},
+};
+
+function tierBadge(v, map){
+  if(!v||v==='—')return'—';
+  const e=map[v];
+  if(!e)return v;
+  const c=TIER_C[e.t]||'#a0a0c0';
+  const fw=e.t<=2?'500':'400';
+  const dot=`<span style="display:inline-block;width:6px;height:6px;border-radius:50%;background:${c};margin-right:5px;flex-shrink:0;vertical-align:middle;position:relative;top:-1px"></span>`;
+  const title=e.note?` title="${e.note} (tier ${e.t})"`:' ';
+  return`<span${title}style="color:${c};font-weight:${fw};display:inline-flex;align-items:center">${dot}${v}</span>`;
+}
+
+/* ── SUPPLEMENTARY FEATURE DATA ─────────────
+   From Ecovacs marketing/key-feature docs. Fills gaps the spec table doesn't cover:
+   AIVI version, ZeroTangle version, TruEdge version, mop RPM, hot-dry temp,
+   auto-solution dispenser, PowerBoost flash-charge rate, Triple Lift, Fresh-Flow,
+   TruePass obstacle crossing, camera resolution, corrected mop type labels.
+────────────────────────────────────────────── */
+const FEATURES={
+  //                          aivi  zt    te    rpm  dry  sol   pb   tri   ff    tp    cam   bagless re_mop carpet_care mop_override
+  'X11 OmniCyclone': {aivi_v:'3.0',zt_v:'3.0',te_v:null,  mop_rpm:200,  hot_dry_c:null, solution_auto:false, powerboost_pct:6,   triple_lift:false, fresh_flow:false, truepass:true,  camera_res:null,  bagless:true,  re_mop:false, carpet_care:false, mop_override:null},
+  'X11 PRO OMNI':    {aivi_v:'3.0',zt_v:'3.0',te_v:null,  mop_rpm:200,  hot_dry_c:63,   solution_auto:false, powerboost_pct:6,   triple_lift:false, fresh_flow:false, truepass:true,  camera_res:null,  bagless:true,  re_mop:false, carpet_care:false, mop_override:null},
+  'X8 MAX PRO OMNI': {aivi_v:'3.0',zt_v:'3.0',te_v:'2.0', mop_rpm:null, hot_dry_c:63,   solution_auto:true,  powerboost_pct:null,triple_lift:true,  fresh_flow:false, truepass:false, camera_res:null,  bagless:false, re_mop:false, carpet_care:true,  mop_override:null},
+  'X8 PRO OMNI':     {aivi_v:'3.0',zt_v:'2.0',te_v:'2.0', mop_rpm:null, hot_dry_c:63,   solution_auto:true,  powerboost_pct:null,triple_lift:false, fresh_flow:false, truepass:false, camera_res:null,  bagless:false, re_mop:true,  carpet_care:true,  mop_override:null},
+  'T90 PRO OMNI':    {aivi_v:'4.0',zt_v:null, te_v:'3.0', mop_rpm:200,  hot_dry_c:null, solution_auto:true,  powerboost_pct:10,  triple_lift:false, fresh_flow:true,  truepass:false, camera_res:null,  bagless:false, re_mop:false, carpet_care:false, mop_override:'OZMO ROLLER 3.0'},
+  'T90 OMNI':        {aivi_v:'4.0',zt_v:null, te_v:'3.0', mop_rpm:200,  hot_dry_c:null, solution_auto:false, powerboost_pct:null,triple_lift:false, fresh_flow:true,  truepass:false, camera_res:null,  bagless:false, re_mop:false, carpet_care:false, mop_override:'OZMO ROLLER 3.0'},
+  'T80S OMNI':       {aivi_v:'3.0',zt_v:null, te_v:'3.0', mop_rpm:220,  hot_dry_c:63,   solution_auto:false, powerboost_pct:null,triple_lift:true,  fresh_flow:false, truepass:false, camera_res:null,  bagless:false, re_mop:false, carpet_care:false, mop_override:'OZMO ROLLER 2.0'},
+  'T80 OMNI':        {aivi_v:'3.0',zt_v:'3.0',te_v:'2.0', mop_rpm:null, hot_dry_c:45,   solution_auto:false, powerboost_pct:null,triple_lift:false, fresh_flow:false, truepass:false, camera_res:null,  bagless:false, re_mop:true,  carpet_care:false, mop_override:null},
+  'T50 PRO OMNI':    {aivi_v:'3.0',zt_v:'2.0',te_v:'2.0', mop_rpm:null, hot_dry_c:45,   solution_auto:false, powerboost_pct:null,triple_lift:false, fresh_flow:false, truepass:false, camera_res:'960P',bagless:false, re_mop:false, carpet_care:false, mop_override:null},
+  'T50 OMNI':        {aivi_v:null, zt_v:'2.0',te_v:'2.0', mop_rpm:null, hot_dry_c:45,   solution_auto:false, powerboost_pct:null,triple_lift:false, fresh_flow:false, truepass:false, camera_res:null,  bagless:false, re_mop:false, carpet_care:false, mop_override:null},
+  'T30S PRO':        {aivi_v:'2.0',zt_v:null, te_v:'1.0', mop_rpm:null, hot_dry_c:null, solution_auto:false, powerboost_pct:null,triple_lift:false, fresh_flow:false, truepass:false, camera_res:null,  bagless:false, re_mop:true,  carpet_care:false, mop_override:null},
+};
+// Note: X8 MAX PRO OMNI ZeroTangle listed as 2.0 in spec table but 3.0 in Ecovacs key features doc — key features doc used.
+// Note: T90 series mop type corrected from "Microfiber Roller" (spec table label) to "OZMO ROLLER 3.0" (key features doc).
+// Note: T80S mop type corrected from "Microfiber Roller" to "OZMO ROLLER 2.0" (key features doc).
+
+/* ── RAW SPECS ─────────────────────────────── */
+const RAW={"X11 OmniCyclone":{"Navigation Type":"dToF","Obstacle Avoidance":"RGBD","YIKO":"YIKO-GPT","mopping type":"OZMO ROLLER 2.0","filter level":"M6","automatic mop cleaning":"Yes","Extendable Side Brush":"Yes","Extendable Mop":"Yes","Main brush material":"brush","Video Manager":"Yes","AIVI 3D 3.0 Omni-Approac":"Yes","Anti-tangle technology":"ZeroTangle 3.0","ZeroTangle（Y/N）":"Yes","TruEdge（Y/N）":"Yes","Ultrasonic carpet detection（Y/N)":"Yes","AI stain detection（Y/N)":"Yes","Carpet pressurization（Y/N)":"Yes","Mop pressurization (Y/N)":"No","water tank capacity（ml）":"110","mop diameter(mm)":"175","Hot water mopping the floor":"Yes","Barrier crossing ability (mm)（with mop）":"24","automatic mop lifting (mm)":"10","auto dust collection":"Yes","Station actively self-cleaning":"Yes","dust bag capacity（L）":"1.6","warm water mop cleaning（Y/N）":"Yes","Mopping area based on water tank capacity（m²）":"400","hot air dry":"Yes","vacuum level（MAX）（Pa）":"19500","Battery capacity（mAh）":"6400","charging time(H)":"3h10min","Charging method (fast charging/normal charging)":"PowerBoost Charging","working time on hard floor-standard mode（sweep）(min)":"207","DEEBOT rated power(W)":"110","Dust box capacity(L)":"0.22","Deebot dimension (wide/depth/height mm)":"353*351*98","DEEBOT net weight (KG)":"5.3","noise-standard mode -sweep （dBA)":"61.8"},"X11 PRO OMNI":{"Navigation Type":"dToF","Obstacle Avoidance":"RGBD","YIKO":"YIKO-GPT","mopping type":"OZMO ROLLER 2.0","filter level":"M6","automatic mop cleaning":"Yes","Extendable Side Brush":"Yes","Extendable Mop":"Yes","Video Manager":"Yes","AIVI 3D 3.0 Omni-Approac":"Yes","Anti-tangle technology":"ZeroTangle 3.0","ZeroTangle（Y/N）":"Yes","TruEdge（Y/N）":"Yes","Ultrasonic carpet detection（Y/N)":"Yes","AI stain detection（Y/N)":"Yes","Carpet pressurization（Y/N)":"Yes","Mop pressurization (Y/N)":"No","water tank capacity（ml）":"110","mop diameter(mm)":"175","Hot water mopping the floor":"Yes","Barrier crossing ability (mm)（with mop）":"24","automatic mop lifting (mm)":"10","auto dust collection":"Yes","Station actively self-cleaning":"Yes","dust bag capacity（L）":"2.5","warm water mop cleaning（Y/N）":"Yes","Mopping area based on water tank capacity（m²）":"400","hot air dry":"Yes","vacuum level（MAX）（Pa）":"19500","Battery capacity（mAh）":"6400","charging time(H)":"3h10min","Charging method (fast charging/normal charging)":"PowerBoost Charging","working time on hard floor-standard mode（sweep）(min)":"207","DEEBOT rated power(W)":"110","Dust box capacity(L)":"0.22","Deebot dimension (wide/depth/height mm)":"353*351*98","DEEBOT net weight (KG)":"5.3","noise-standard mode -sweep （dBA)":"61.8"},"X8 MAX PRO OMNI":{"Navigation Type":"dToF","Obstacle Avoidance":"RGBD + camera","YIKO":"YIKO-GPT","mopping type":"OZMO ROLLER","filter level":"M6","automatic mop cleaning":"Yes","Extendable Side Brush":"No","Extendable Mop":"Yes","Video Manager":"Yes","Anti-tangle technology":"ZeroTangle 2.0","ZeroTangle（Y/N）":"Yes","Ultrasonic carpet detection（Y/N)":"Yes","AI stain detection（Y/N)":"Yes","Carpet pressurization（Y/N)":"Yes","Mop pressurization (Y/N)":"Yes","water tank capacity（ml）":"110","mop diameter(mm)":"175","Hot water mopping the floor":"Yes","Barrier crossing ability (mm)（with mop）":"20","automatic mop lifting (mm)":"10","auto dust collection":"Yes","Station actively self-cleaning":"Yes","warm water mop cleaning（Y/N）":"Yes","Mopping area based on water tank capacity（m²）":"400","hot air dry":"Yes","vacuum level（MAX）（Pa）":"16600","Battery capacity（mAh）":"6400","charging time(H)":"3H6min","Charging method (fast charging/normal charging)":"fast charging","working time on hard floor-standard mode（sweep）(min)":"196","DEEBOT rated power(W)":"110","Dust box capacity(L)":"0.22","Deebot dimension (wide/depth/height mm)":"353*351.5*98","DEEBOT net weight (KG)":"5.1","noise-standard mode -sweep （dBA)":"64.5"},"X8 PRO OMNI":{"Navigation Type":"dToF","Obstacle Avoidance":"RGBD","YIKO":"YIKO-GPT","mopping type":"OZMO ROLLER","filter level":"M6","automatic mop cleaning":"Yes","Video Manager":"Yes","AIVI 3D 3.0 Omni-Approac":"Yes","Anti-tangle technology":"ZeroTangle 2.0","ZeroTangle（Y/N）":"Yes","Ultrasonic carpet detection（Y/N)":"Yes","AI stain detection（Y/N)":"Yes","Carpet pressurization（Y/N)":"Yes","Mop pressurization (Y/N)":"No","mop diameter(mm)":"175","Hot water mopping the floor":"No","Barrier crossing ability (mm)（with mop）":"20","automatic mop lifting (mm)":"10","auto dust collection":"Yes","Station actively self-cleaning":"Yes","warm water mop cleaning（Y/N）":"Yes","Mopping area based on water tank capacity（m²）":"400","hot air dry":"Yes","vacuum level（MAX）（Pa）":"18000","Battery capacity（mAh）":"6400","charging time(H)":"4h37min","Charging method (fast charging/normal charging)":"fast charging","working time on hard floor-standard mode（sweep）(min)":"228","DEEBOT rated power(W)":"80","Dust box capacity(L)":"0.22","Deebot dimension (wide/depth/height mm)":"353*351.5*98","DEEBOT net weight (KG)":"5.3","noise-standard mode -sweep （dBA)":"65"},"T90 PRO OMNI":{"Navigation Type":"Mini-ToF","Obstacle Avoidance":"Structured light + RGB AI","YIKO":"YIKO-GPT","mopping type":"Microfiber Roller","filter level":"M6","automatic mop cleaning":"Yes","Extendable Side Brush":"Yes","Extendable Mop":"Yes","Video Manager":"Yes","AIVI 3D 3.0 Omni-Approac":"Yes","Anti-tangle technology":"ARClean Anti-Tangle","ZeroTangle（Y/N）":"Yes","TruEdge（Y/N）":"Yes","Ultrasonic carpet detection（Y/N)":"Yes","AI stain detection（Y/N)":"Yes","Carpet pressurization（Y/N)":"Yes","Mop pressurization (Y/N)":"No","water tank capacity（ml）":"110","mop diameter(mm)":"270","Hot water mopping the floor":"Yes","Barrier crossing ability (mm)（with mop）":"24","automatic mop lifting (mm)":"15","auto dust collection":"Yes","Station actively self-cleaning":"Yes","dust bag capacity（L）":"2.5","warm water mop cleaning（Y/N）":"Yes","Mopping area based on water tank capacity（m²）":"400","hot air dry":"Yes","vacuum level（MAX）（Pa）":"30000","Battery capacity（mAh）":"4000","charging time(H)":"2.5h","Charging method (fast charging/normal charging)":"PowerBoost Charging","working time on hard floor-standard mode（sweep）(min)":"120","DEEBOT rated power(W)":"65","Dust box capacity(L)":"0.25","Deebot dimension (wide/depth/height mm)":"353*351*95","DEEBOT net weight (KG)":"5.3","noise-standard mode -sweep （dBA)":"60"},"T90 OMNI":{"Navigation Type":"Mini-ToF","Obstacle Avoidance":"Structured light + RGB AI","YIKO":"None","mopping type":"Microfiber Roller","filter level":"M6","automatic mop cleaning":"Yes","Extendable Side Brush":"Yes","Video Manager":"Yes","Anti-tangle technology":"ARClean Anti-Tangle","ZeroTangle（Y/N）":"Yes","TruEdge（Y/N）":"Yes","Ultrasonic carpet detection（Y/N)":"Yes","AI stain detection（Y/N)":"Yes","Carpet pressurization（Y/N)":"Yes","Mop pressurization (Y/N)":"No","mop diameter(mm)":"270","Hot water mopping the floor":"Yes","Barrier crossing ability (mm)（with mop）":"24","automatic mop lifting (mm)":"15","auto dust collection":"Yes","Station actively self-cleaning":"Yes","dust bag capacity（L）":"2.5","warm water mop cleaning（Y/N）":"Yes","Mopping area based on water tank capacity（m²）":"400","hot air dry":"Yes","vacuum level（MAX）（Pa）":"30000","Battery capacity（mAh）":"6400","charging time(H)":"3.5h","Charging method (fast charging/normal charging)":"fast charging","working time on hard floor-standard mode（sweep）(min)":"225","DEEBOT rated power(W)":"65","Dust box capacity(L)":"0.25","Deebot dimension (wide/depth/height mm)":"353*351*95","DEEBOT net weight (KG)":"5.4","noise-standard mode -sweep （dBA)":"60"},"T80S OMNI":{"Navigation Type":"dToF (ZJ2515)","Obstacle Avoidance":"RGBD","YIKO":"None","mopping type":"Microfiber Roller","filter level":"M6","automatic mop cleaning":"Yes","Video Manager":"Yes","ZeroTangle（Y/N）":"Yes","Ultrasonic carpet detection（Y/N)":"Yes","AI stain detection（Y/N)":"Yes","Carpet pressurization（Y/N)":"Yes","Mop pressurization (Y/N)":"No","water tank capacity（ml）":"110","mop diameter(mm)":"175","Hot water mopping the floor":"Yes","Barrier crossing ability (mm)（with mop）":"20","auto dust collection":"Yes","Station actively self-cleaning":"No","warm water mop cleaning（Y/N）":"Yes","Mopping area based on water tank capacity（m²）":"400","hot air dry":"Yes","vacuum level（MAX）（Pa）":"24800","Battery capacity（mAh）":"6400","charging time(H)":"3.5","Charging method (fast charging/normal charging)":"fast charging","working time on hard floor-standard mode（sweep）(min)":"187","DEEBOT rated power(W)":"80","Dust box capacity(L)":"0.22","Deebot dimension (wide/depth/height mm)":"353*351*98","DEEBOT net weight (KG)":"5.1","noise-standard mode -sweep （dBA)":"61"},"T80 OMNI":{"Navigation Type":"dToF","Obstacle Avoidance":"RGBD","YIKO":"None","mopping type":"OZMO ROLLER","filter level":"M6","automatic mop cleaning":"Yes","Extendable Side Brush":"No","Video Manager":"Yes","ZeroTangle（Y/N）":"Yes","TruEdge（Y/N）":"Yes","Ultrasonic carpet detection（Y/N)":"Yes","AI stain detection（Y/N)":"Yes","Carpet pressurization（Y/N)":"Yes","Mop pressurization (Y/N)":"Yes","mop diameter(mm)":"175","Hot water mopping the floor":"Yes","Barrier crossing ability (mm)（with mop）":"20","automatic mop lifting (mm)":"10","auto dust collection":"Yes","Station actively self-cleaning":"Yes","warm water mop cleaning（Y/N）":"Yes","Mopping area based on water tank capacity（m²）":"400","hot air dry":"Yes","vacuum level（MAX）（Pa）":"18000","Battery capacity（mAh）":"6400","charging time(H)":"4h37min","Charging method (fast charging/normal charging)":"fast charging","working time on hard floor-standard mode（sweep）(min)":"223","DEEBOT rated power(W)":"80","Dust box capacity(L)":"0.22","Deebot dimension (wide/depth/height mm)":"353*351.5*98","DEEBOT net weight (KG)":"4.95","noise-standard mode -sweep （dBA)":"63.4"},"T50 MAX PRO OMNI":{"Navigation Type":"TrueMapping 2.0 (dToF)","Obstacle Avoidance":"AIVI 3D 3.0","YIKO":"YIKO","mopping type":"OZMO Turbo 2.0","filter level":"F9","automatic mop cleaning":"Yes","Extendable Mop":"Yes","Video Manager":"Yes","Ultrasonic carpet detection（Y/N)":"Yes","Carpet pressurization（Y/N)":"Yes","Mop pressurization (Y/N)":"No","water tank capacity（ml）":"80","mop diameter(mm)":"136","Hot water mopping the floor":"Yes","Barrier crossing ability (mm)（with mop）":"22","automatic mop lifting (mm)":"18","auto dust collection":"Yes","warm water mop cleaning（Y/N）":"Yes","Mopping area based on water tank capacity（m²）":"400","hot air dry":"Yes","vacuum level（MAX）（Pa）":"18500","Battery capacity（mAh）":"6400","charging time(H)":"3.5h","Charging method (fast charging/normal charging)":"fast charging","working time on hard floor-standard mode（sweep）(min)":"206","DEEBOT rated power(W)":"80","Dust box capacity(L)":"0.30","Deebot dimension (wide/depth/height mm)":"353*351*98","DEEBOT net weight (KG)":"4.5","Noise Value (dBA )":"65"},"T50 PRO OMNI":{"Navigation Type":"TrueMapping 2.0 (dToF)","Obstacle Avoidance":"AIVI 3D 3.0","YIKO":"YIKO","mopping type":"OZMO Turbo 2.0","filter level":"F9","automatic mop cleaning":"Yes","Extendable Mop":"Yes","Video Manager":"Yes","Ultrasonic carpet detection（Y/N)":"Yes","Carpet pressurization（Y/N)":"Yes","Mop pressurization (Y/N)":"No","water tank capacity（ml）":"55","mop diameter(mm)":"136","Hot water mopping the floor":"Yes","Barrier crossing ability (mm)（with mop）":"20","auto dust collection":"Yes","warm water mop cleaning（Y/N）":"Yes","Mopping area based on water tank capacity（m²）":"300","hot air dry":"Yes","vacuum level（MAX）（Pa）":"15000","Battery capacity（mAh）":"6400","charging time(H)":"3.7h","Charging method (fast charging/normal charging)":"fast charging","working time on hard floor-standard mode（sweep）(min)":"255","DEEBOT rated power(W)":"75","Dust box capacity(L)":"0.26","Deebot dimension (wide/depth/height mm)":"352.7*351.6*81","DEEBOT net weight (KG)":"3.7","Noise Value (dBA )":"63"},"T50 OMNI":{"Navigation Type":"dToF LiDAR","Obstacle Avoidance":"Infrared AI + 3D structured light","YIKO":"YIKO 2.0","mopping type":"OZMO Turbo 2.0","filter level":"F9","automatic mop cleaning":"Yes","Extendable Side Brush":"Yes","Extendable Mop":"Yes","Video Manager":"No","Anti-tangle technology":"ZeroTangle 2.0","ZeroTangle（Y/N）":"Yes","Ultrasonic carpet detection（Y/N)":"Yes","Carpet pressurization（Y/N)":"Yes","Mop pressurization (Y/N)":"No","water tank capacity（ml）":"55","mop diameter(mm)":"136","Hot water mopping the floor":"Yes","Barrier crossing ability (mm)（with mop）":"20","auto dust collection":"Yes","warm water mop cleaning（Y/N）":"Yes","Mopping area based on water tank capacity（m²）":"300","hot air dry":"Yes","vacuum level（MAX）（Pa）":"15000","Battery capacity（mAh）":"5200","charging time(H)":"3.25","Charging method (fast charging/normal charging)":"fast charging","working time on hard floor-standard mode（sweep）(min)":"205","DEEBOT rated power(W)":"75","Dust box capacity(L)":"0.26","Deebot dimension (wide/depth/height mm)":"352.7*351.6*81","DEEBOT net weight (KG)":"3.7","noise-standard mode -sweep （dBA)":"63"},"T30S PRO":{"Navigation Type":"TrueMapping 2.0 (dToF)","Obstacle Avoidance":"AIVI 3D 2.0","YIKO":"YIKO","mopping type":"OZMO Turbo 2.0","filter level":"F9","automatic mop cleaning":"Yes","Extendable Mop":"Yes","Video Manager":"Yes","Carpet pressurization（Y/N)":"Yes","Mop pressurization (Y/N)":"No","water tank capacity（ml）":"55","mop diameter(mm)":"136","Hot water mopping the floor":"Yes","Barrier crossing ability (mm)（with mop）":"20","auto dust collection":"Yes","warm water mop cleaning（Y/N）":"Yes","Mopping area based on water tank capacity（m²）":"293","hot air dry":"Yes","vacuum level（MAX）（Pa）":"11000","Battery capacity（mAh）":"6400","charging time(H)":"5.1h","working time on hard floor-standard mode（sweep）(min)":"351","DEEBOT rated power(W)":"60","Dust box capacity(L)":"0.275","Deebot dimension (wide/depth/height mm)":"353*351*104","DEEBOT net weight (KG)":"3.7","Noise Value (dBA )":"65"}};
+
+/* ── NORMALISE ─────────────────────────────── */
+function yn(v){if(!v)return null;const s=String(v).toLowerCase().trim();return(s==='yes'||s==='y')?true:(s==='no'||s==='n'||s==='none')?false:null}
+function pN(v){if(v==null)return null;const m=String(v).match(/[\d.]+/);return m?parseFloat(m[0]):null}
+function pPa(v){if(!v)return null;const m=String(v).replace(/[,，]/g,'').match(/\d+/);return m?parseInt(m[0]):null}
+function pBat(v){if(!v)return null;const m=String(v).match(/\d{4,5}/);return m?parseInt(m[0]):null}
+function pRT(v){if(!v)return null;const s=String(v).replace(/[^\d\-]/g,'');if(s.includes('-'))return parseInt(s.split('-')[1]);return parseInt(s)||null}
+function pDB(r){const lV=r['Dust box capacity(L)'];if(lV){const n=parseFloat(lV);return isNaN(n)?null:Math.round(n*1000)}const ml=r['Dust Bin Capacity (ml)'];return ml?parseInt(ml)||null:null}
+function pWt(r){const v=r['DEEBOT net weight (KG)']||r['Net weight of Robot (KG)'];if(!v)return null;const n=parseFloat(String(v).match(/[\d.]+/)?.[0]);return(!n||n>10)?null:n}
+function pCh(v){if(!v)return null;const s=String(v).toLowerCase();const hm=s.match(/(\d+)h\s*(\d+)m/);if(hm)return parseFloat(hm[1])+parseInt(hm[2])/60;const h=s.match(/(\d+\.?\d*)\s*h/);if(h)return parseFloat(h[1]);const n=s.match(/^(\d+\.?\d*)$/);if(n)return parseFloat(n[1]);return null}
+function pNoise(r){const v=r['noise-standard mode -sweep （dBA)']||r['Noise Value (dBA )'];if(!v)return null;const m=String(v).match(/[\d.]+/);return m?parseFloat(m[0]):null}
+function getFam(n){return n.startsWith('X11')?'X11':n.startsWith('X8')?'X8':n.startsWith('T90')?'T90':n.startsWith('T80')?'T80':n.startsWith('T50')?'T50':n.startsWith('T30')?'T30S':'Other'}
+function yikoTier(r){const y=r['YIKO']||'';if(!y||y==='None'||y==='No')return'—';return y.includes('GPT')?'YIKO-GPT':y.includes('2.0')?'YIKO 2.0':'YIKO'}
+
+function normalize(name,r){
+  const bp=getBestPrice(name);
+  const retailers=RETAILER_URLS[name]||{};
+  const f=FEATURES[name]||{};
+  return{
+    name,family:getFam(name),spec_url:SPEC_URLS[name],
+    price_aud:bp?.price||null, price_retailer:bp?.label||null, price_url:bp?.url||null,
+    price_ecovacs:PRICES[name]?.ecovacs||null,
+    price_jb:PRICES[name]?.jb||null,
+    price_hn:PRICES[name]?.hn||null,
+    price_gg:PRICES[name]?.gg||null,
+    jb_url:retailers.jb||null,
+    release_year:RELEASE_YEARS[name]||null,
+    suction_pa:pPa(r['vacuum level（MAX）（Pa）']||r['Vacuum Power Adjustment']),
+    runtime_min:pRT(r['working time on hard floor-standard mode（sweep）(min)']||r['Working Time (min)']),
+    charge_h:pCh(r['charging time(H)']||r['Charging Time (H)']),
+    battery_mah:pBat(r['Battery capacity（mAh）']||r['Battery Specifications (Type, mAh)']),
+    dust_bin_ml:pDB(r),robot_weight_kg:pWt(r),
+    mop_diameter_mm:pN(r['mop diameter(mm)']||r['Mop diameter(mm)']),
+    mop_lift_mm:pN(r['automatic mop lifting (mm)']||r['Automatic mop lifting (mm)']),
+    step_height_mm:pN(r['Barrier crossing ability (mm)（with mop）']||r['(With mop)barrier crossing ability (mm)']),
+    mopping_area:pN(r['Mopping area based on water tank capacity（m²）']||r['The mopping area (based on the water tank capacity) (m²)']),
+    dust_bag_l:pN(r['dust bag capacity（L）']),noise_dba:pNoise(r),
+    navigation:r['Navigation Type']||'—',obstacle:r['Obstacle Avoidance']||'—',
+    // mop_type: key features doc overrides spec table label where they conflict
+    mop_type:f.mop_override||(r['mopping type']||r['Mopping Type']||'—'),
+    filter_level:r['filter level']||r['Filter level']||'—',
+    robot_dims:r['Deebot dimension (wide/depth/height mm)']||r['Size of Robot (φxH,mm)']||'—',
+    charge_method:r['Charging method (fast charging/normal charging)']||'—',
+    yiko_tier:yikoTier(r),
+    hot_water:yn(r['Hot water mopping the floor']),warm_wash:yn(r['warm water mop cleaning（Y/N）']||r['Warm water mop cleaning']),
+    hot_dry:yn(r['hot air dry']||r['Hot air dry']),auto_dust:yn(r['auto dust collection']),
+    station_clean:yn(r['Station actively self-cleaning']),mop_boost:yn(r['Mop pressurization (Y/N)']),
+    carpet_boost:yn(r['Carpet pressurization（Y/N)']),zerotangle:yn(r['ZeroTangle（Y/N）']),
+    truedge:!!(r['TruEdge（Y/N）']||r['Edge Cleaning']),
+    video:yn(r['Video Manager']),ai_stain:yn(r['AI stain detection（Y/N)']||r['Dirt detection-Intelligent deep mopping']),
+    // Fields from key features doc (not in spec tables)
+    aivi_version: f.aivi_v||null,
+    zerotangle_v: f.zt_v||null,
+    truedge_v:    f.te_v||null,
+    mop_rpm:      f.mop_rpm||null,
+    hot_dry_c:    f.hot_dry_c||null,
+    solution_auto:f.solution_auto||false,
+    powerboost_pct:f.powerboost_pct||null,
+    triple_lift:  f.triple_lift||false,
+    fresh_flow:   f.fresh_flow||false,
+    truepass:     f.truepass||false,
+    camera_res:   f.camera_res||null,
+    re_mop:       f.re_mop||false,
+    bagless:      f.bagless||false,
+    carpet_care:  f.carpet_care||false,
+  };
+}
+// T50 MAX PRO OMNI discontinued in AU — excluded
+const MODELS=Object.entries(RAW).filter(([n])=>n!=='T50 MAX PRO OMNI').map(([n,r])=>normalize(n,r));
+
+/* ── STATE ──────────────────────────────────── */
+// sorts: array of {key,asc} — first entry = primary
+const S={view:'grid',family:'ALL',sorts:[{key:'family',asc:true}],selected:new Set()};
+
+/* ── HELPERS ─────────────────────────────────── */
+const fc=fam=>FAM_COL[fam]||'var(--text2)';
+const fAud=v=>v?'$'+v.toLocaleString():'—';
+const fNum=(v,u='',dp=0)=>v==null?'—':(dp?v.toFixed(dp):v.toLocaleString())+(u?' '+u:'');
+const fH=h=>{if(h==null)return'—';const hr=Math.floor(h),m=Math.round((h-hr)*60);return m?`${hr}h ${m}m`:`${hr}h`};
+const fYN=v=>v===true?'<span class="y">✓</span>':v===false?'<span class="n">✗</span>':'<span class="n">—</span>';
+const filtered=()=>S.family==='ALL'?MODELS:MODELS.filter(m=>m.family===S.family);
+
+function sorted(list){
+  return[...list].sort((a,b)=>{
+    for(const {key,asc} of S.sorts){
+      let av=a[key],bv=b[key];
+      if(key==='family'){av=FAM_ORDER.indexOf(a.family)*100+MODELS.indexOf(a);bv=FAM_ORDER.indexOf(b.family)*100+MODELS.indexOf(b)}
+      if(av==null&&bv==null)continue;
+      if(av==null)return 1;if(bv==null)return-1;
+      const c=av<bv?-1:av>bv?1:0;
+      if(c!==0)return asc?c:-c;
+    }
+    return 0;
+  });
+}
+
+function getBests(list,key,hi=true){
+  const vals=list.map(m=>m[key]).filter(v=>v!=null);
+  if(!vals.length)return{};
+  return{best:hi?Math.max(...vals):Math.min(...vals),worst:hi?Math.min(...vals):Math.max(...vals)};
+}
+function toggleSel(name){
+  if(S.selected.has(name))S.selected.delete(name);
+  else S.selected.add(name);
+  document.getElementById('sel-n').textContent=S.selected.size;
+  document.getElementById('btn-go-compare').disabled=S.selected.size<2;
+}
+
+/* ── GRID ───────────────────────────────────── */
+function renderGrid(){
+  const el=document.getElementById('view-grid');
+  const list=sorted(filtered());
+  const maxPa=Math.max(...MODELS.map(m=>m.suction_pa||0));
+  if(!list.length){el.innerHTML='<div class="empty-msg">No models match.</div>';return}
+  el.innerHTML=list.map(m=>{
+    const sel=S.selected.has(m.name);
+    const col=fc(m.family);
+    const pct=m.suction_pa?Math.round(m.suction_pa/maxPa*100):0;
+    const tags=[];
+    // Pricing
+    if(m.price_aud)tags.push(`<span class="tag p">${fAud(m.price_aud)} ${m.price_retailer}</span>`);
+    // Mopping highlights
+    if(m.hot_water)tags.push('<span class="tag g">Hot water mop</span>');
+    if(m.mop_boost)tags.push('<span class="tag g">Mop boost</span>');
+    if(m.fresh_flow)tags.push('<span class="tag g">Fresh-Flow</span>');
+    if(m.re_mop)tags.push('<span class="tag g">Auto re-mop</span>');
+    // Station / drying
+    if(m.hot_dry_c===63)tags.push('<span class="tag g">63°C dry</span>');
+    else if(m.hot_dry_c===45)tags.push('<span class="tag">45°C dry</span>');
+    if(m.solution_auto)tags.push('<span class="tag g">Auto solution</span>');
+    if(m.bagless)tags.push('<span class="tag g">Bagless</span>');
+    // AI / nav
+    if(m.aivi_version)tags.push(`<span class="tag" style="${m.aivi_version==='4.0'?'border-color:rgba(251,191,36,.4);color:#fbbf24':''}">AIVI ${m.aivi_version}</span>`);
+    if(m.yiko_tier==='YIKO-GPT')tags.push('<span class="tag g">YIKO-GPT</span>');
+    // Special capabilities
+    if(m.triple_lift)tags.push('<span class="tag g">Triple Lift</span>');
+    if(m.carpet_care)tags.push('<span class="tag g">Carpet Care</span>');
+    if(m.truepass)tags.push('<span class="tag g">TruePass</span>');
+    if(m.powerboost_pct)tags.push(`<span class="tag g">PowerBoost ${m.powerboost_pct}%/3min</span>`);
+    if(m.camera_res)tags.push(`<span class="tag">${m.camera_res} cam</span>`);
+    if(!m.video)tags.push('<span class="tag">No camera</span>');
+    // Warnings
+    if(m.name==='X8 PRO OMNI')tags.push('<span class="tag" style="border-color:#ff7070;color:#ff7070" title="Ecovacs AU has no listing. Retailers appear to be selling the US-spec unit (110V). Confirm AU warranty.">⚠ US-spec</span>');
+    return`<div class="card${sel?' sel':''}" data-name="${m.name}">
+<div class="card-check">${sel?'✓':''}</div>
+<div class="card-fam" style="color:${col}">${m.family} · ${m.release_year||'—'}</div>
+<div class="card-name">${m.name}</div>
+<div class="card-row"><span class="ck">Suction</span><span class="cv${m.suction_pa===maxPa?' best':''}">${m.suction_pa?m.suction_pa.toLocaleString()+' Pa':'—'}</span></div>
+<div class="bar"><div class="bar-fill" style="width:${pct}%"></div></div>
+<div class="card-row"><span class="ck">Runtime</span><span class="cv">${fNum(m.runtime_min,'min')}</span></div>
+<div class="card-row"><span class="ck">Battery</span><span class="cv">${m.battery_mah?(m.battery_mah/1000).toFixed(1)+' Ah':'—'}</span></div>
+<div class="card-row"><span class="ck">Mop Ø</span><span class="cv">${fNum(m.mop_diameter_mm,'mm')}</span></div>
+<div class="card-row"><span class="ck">Robot wt</span><span class="cv">${fNum(m.robot_weight_kg,'kg',2)}</span></div>
+<div class="card-row"><span class="ck">Dust bin</span><span class="cv">${fNum(m.dust_bin_ml,'ml')}</span></div>
+<div class="card-tags">${tags.join('')}</div>
+<a class="card-link" href="${m.spec_url}" target="_blank" onclick="event.stopPropagation()">↗ Ecovacs specs</a>
+${(()=>{
+  const p=PRICES[m.name]||{};const u=RETAILER_URLS[m.name]||{};
+  return Object.entries(p).sort((a,b)=>a[1]-b[1]).map(([r,v])=>
+    u[r]?`<a class="card-link" href="${u[r]}" target="_blank" onclick="event.stopPropagation()">${fAud(v)} @ ${RETAILER_LABELS[r]||r}</a>`:''
+  ).join('');
+})()}
+</div>`;
+  }).join('');
+  el.querySelectorAll('.card').forEach(c=>c.addEventListener('click',e=>{
+    if(e.target.tagName==='A')return;toggleSel(c.dataset.name);renderGrid();
+  }));
+}
+
+/* ── LIST ───────────────────────────────────── */
+// All normalised fields as sortable columns
+const LC=[
+  // Identity
+  {k:'family',        lbl:'Family',        f:m=>`<span class="lt-fam" style="color:${fc(m.family)}">${m.family}</span>`},
+  {k:'name',          lbl:'Model',         f:m=>`<span class="lt-name">${m.name}</span>`},
+  {k:'release_year',  lbl:'Year',          f:m=>m.release_year||'—'},
+  // Pricing
+  {k:'price_aud',     lbl:'Best Price',    f:m=>m.price_aud?`<span class="lt-price">${fAud(m.price_aud)}</span> <span style="font-size:10px;color:var(--text3)">${m.price_retailer||''}</span>`:'—'},
+  {k:'price_ecovacs', lbl:'Ecovacs',       f:m=>m.price_ecovacs?fAud(m.price_ecovacs):'—'},
+  {k:'price_jb',      lbl:'JB Hi-Fi',      f:m=>m.price_jb?fAud(m.price_jb):'—'},
+  {k:'price_hn',      lbl:'HN/GG',         f:m=>(m.price_hn||m.price_gg)?fAud(m.price_hn||m.price_gg):'—'},
+  // Performance
+  {k:'suction_pa',    lbl:'Suction',       f:(m,b)=>`<span class="${m.suction_pa===b.best?'lt-best':''}">${fNum(m.suction_pa,'Pa')}</span>`,bk:'suction_pa',hi:true},
+  {k:'runtime_min',   lbl:'Runtime',       f:m=>fNum(m.runtime_min,'min')},
+  {k:'battery_mah',   lbl:'Battery',       f:m=>m.battery_mah?(m.battery_mah/1000).toFixed(1)+' Ah':'—'},
+  {k:'charge_h',      lbl:'Charge time',   f:m=>fH(m.charge_h)},
+  {k:'noise_dba',     lbl:'Noise',         f:m=>fNum(m.noise_dba,'dBA')},
+  // Navigation & AI
+  {k:'navigation',    lbl:'Navigation',    f:m=>tierBadge(m.navigation,NAV_TIERS)},
+  {k:'obstacle',      lbl:'Obstacle avoid',f:m=>m.obstacle||'—'},
+  {k:'aivi_version',  lbl:'AIVI version',  f:m=>tierBadge(m.aivi_version,AIVI_TIERS)},
+  {k:'zerotangle',    lbl:'ZeroTangle',    f:m=>fYN(m.zerotangle)},
+  {k:'zerotangle_v',  lbl:'ZeroTangle ver',f:m=>tierBadge(m.zerotangle_v,ZTANGLE_TIERS)},
+  {k:'truedge',       lbl:'TruEdge',       f:m=>m.truedge?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'truedge_v',     lbl:'TruEdge ver',   f:m=>tierBadge(m.truedge_v,TRUEDGE_TIERS)},
+  {k:'ai_stain',      lbl:'AI stain',      f:m=>fYN(m.ai_stain)},
+  {k:'video',         lbl:'Camera',        f:m=>fYN(m.video)},
+  {k:'camera_res',    lbl:'Camera res',    f:m=>m.camera_res||'—'},
+  {k:'yiko_tier',     lbl:'YIKO',          f:m=>m.yiko_tier},
+  // Mopping
+  {k:'mop_type',      lbl:'Mop system',    f:m=>tierBadge(m.mop_type,MOP_TIERS)},
+  {k:'mop_rpm',       lbl:'Mop RPM',       f:m=>m.mop_rpm?m.mop_rpm+' RPM':'—'},
+  {k:'mop_diameter_mm',lbl:'Mop Ø',       f:m=>fNum(m.mop_diameter_mm,'mm')},
+  {k:'mop_lift_mm',   lbl:'Mop lift',      f:m=>fNum(m.mop_lift_mm,'mm')},
+  {k:'mop_boost',     lbl:'Mop boost',     f:m=>fYN(m.mop_boost)},
+  {k:'hot_water',     lbl:'Hot water mop', f:m=>fYN(m.hot_water)},
+  {k:'warm_wash',     lbl:'Warm wash',     f:m=>fYN(m.warm_wash)},
+  {k:'fresh_flow',    lbl:'Fresh-Flow',    f:m=>m.fresh_flow?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'mopping_area',  lbl:'Mop area m²',   f:m=>fNum(m.mopping_area,'m²')},
+  // Station
+  {k:'auto_dust',     lbl:'Auto dust',     f:m=>fYN(m.auto_dust)},
+  {k:'dust_bag_l',    lbl:'Dust bag',      f:m=>fNum(m.dust_bag_l,'L',1)},
+  {k:'hot_dry',       lbl:'Hot air dry',   f:m=>fYN(m.hot_dry)},
+  {k:'hot_dry_c',     lbl:'Hot dry °C',    f:m=>m.hot_dry_c?m.hot_dry_c+'°C':'—'},
+  {k:'solution_auto', lbl:'Auto solution', f:m=>m.solution_auto?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'station_clean', lbl:'Station clean', f:m=>fYN(m.station_clean)},
+  // Robot / physical
+  {k:'dust_bin_ml',   lbl:'Dust bin',      f:m=>fNum(m.dust_bin_ml,'ml')},
+  {k:'filter_level',  lbl:'Filter',        f:m=>tierBadge(m.filter_level,FILTER_TIERS)},
+  {k:'robot_weight_kg',lbl:'Robot wt',     f:m=>fNum(m.robot_weight_kg,'kg',2)},
+  {k:'step_height_mm',lbl:'Step climb',    f:m=>fNum(m.step_height_mm,'mm')},
+  {k:'carpet_boost',  lbl:'Carpet boost',  f:m=>fYN(m.carpet_boost)},
+  {k:'triple_lift',   lbl:'Triple Lift',   f:m=>m.triple_lift?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'carpet_care',   lbl:'Carpet Care',   f:m=>m.carpet_care?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'re_mop',        lbl:'Auto re-mop',   f:m=>m.re_mop?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'bagless',       lbl:'Bagless',       f:m=>m.bagless?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'powerboost_pct',lbl:'Flash-charge',  f:m=>m.powerboost_pct?m.powerboost_pct+'%/3min':'—'},
+  {k:'truepass',      lbl:'TruePass',      f:m=>m.truepass?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'robot_dims',    lbl:'Dims W×D×H',    f:m=>m.robot_dims||'—'},
+  {k:'charge_method', lbl:'Charge method', f:m=>m.charge_method||'—'},
+  // Links
+  {k:'links',         lbl:'Buy links',     f:m=>{
+    const u=RETAILER_URLS[m.name]||{};const p=PRICES[m.name]||{};
+    const parts=[`<a class="lt-a" href="${m.spec_url}" target="_blank">specs</a>`];
+    for(const [r,url] of Object.entries(u)){
+      parts.push(`<a class="lt-a" href="${url}" target="_blank">${RETAILER_LABELS[r]} ${fAud(p[r])}</a>`);
+    }
+    return parts.join(' · ');
+  }},
+];
+
+function renderList(){
+  const list=sorted(filtered());
+  const bsMap={};
+  LC.forEach(c=>{if(c.bk)bsMap[c.bk]=getBests(list,c.bk,c.hi)});
+
+  // Build header with multi-sort indicators
+  const head=LC.map(c=>{
+    const idx=S.sorts.findIndex(s=>s.key===c.k);
+    let cls='';let badge='';
+    if(idx>=0){
+      cls='as'+(S.sorts[idx].asc?' asc':'');
+      if(S.sorts.length>1)badge=`<span class="sort-n">${idx+1}</span>`;
+    }
+    return`<th data-k="${c.k}" class="${cls}" title="Click to sort · Shift+click to add">${c.lbl}${badge}</th>`;
+  }).join('');
+  document.getElementById('lh').innerHTML=`<tr>${head}</tr>`;
+
+  document.getElementById('lb').innerHTML=list.map(m=>`<tr data-name="${m.name}" class="${S.selected.has(m.name)?'sel':''}">${LC.map(c=>`<td>${c.f(m,bsMap[c.bk]||{})}</td>`).join('')}</tr>`).join('');
+
+  // Sort bindings — shift+click for multi-sort
+  document.getElementById('lh').querySelectorAll('th[data-k]').forEach(th=>{
+    th.addEventListener('click',e=>{
+      const k=th.dataset.k;
+      if(e.shiftKey){
+        const idx=S.sorts.findIndex(s=>s.key===k);
+        if(idx>=0){
+          if(!S.sorts[idx].asc)S.sorts.splice(idx,1); // was desc → remove
+          else S.sorts[idx].asc=false;                 // was asc → make desc
+        }else{
+          S.sorts.push({key:k,asc:true});
+        }
+      }else{
+        const cur=S.sorts.find(s=>s.key===k);
+        S.sorts=[{key:k,asc:cur&&S.sorts.length===1?!cur.asc:false}];
+      }
+      syncSort();renderList();
+    });
+  });
+  document.getElementById('lb').querySelectorAll('tr[data-name]').forEach(tr=>{
+    tr.addEventListener('click',e=>{if(e.target.tagName==='A')return;toggleSel(tr.dataset.name);renderList()});
+  });
+}
+
+/* ── COMPARE ────────────────────────────────── */
+const CR=[
+  {sec:'Performance'},
+  {k:'suction_pa',   lbl:'Suction (Pa)',       f:v=>fNum(v,'Pa'),   hi:true},
+  {k:'runtime_min',  lbl:'Runtime (std sweep)', f:v=>fNum(v,'min'),  hi:true},
+  {k:'charge_h',     lbl:'Charge time',         f:v=>fH(v),          hi:false},
+  {k:'battery_mah',  lbl:'Battery',             f:v=>fNum(v,'mAh'),  hi:true},
+  {k:'noise_dba',    lbl:'Noise (sweep)',        f:v=>fNum(v,'dBA'),  hi:false},
+  {k:'price_aud',    lbl:'Best price',           f:v=>v?`<strong>${fAud(v)}</strong>`:'—', hi:false},
+  {k:'price_ecovacs',lbl:'↳ Ecovacs',            f:v=>v?fAud(v):'—'},
+  {k:'price_jb',     lbl:'↳ JB Hi-Fi',           f:v=>v?fAud(v):'—'},
+  {k:'price_hn',     lbl:'↳ Harvey Norman',       f:v=>v?fAud(v):'—'},
+  {k:'price_gg',     lbl:'↳ Good Guys',           f:v=>v?fAud(v):'—'},
+  {sec:'Navigation & AI'},
+  {k:'navigation',   lbl:'Navigation type',     f:v=>tierBadge(v,NAV_TIERS)},
+  {k:'obstacle',     lbl:'Obstacle avoidance',  f:v=>v||'—'},
+  {k:'aivi_version', lbl:'AIVI version',        f:v=>tierBadge(v,AIVI_TIERS)},
+  {k:'zerotangle',   lbl:'ZeroTangle',          f:fYN},
+  {k:'zerotangle_v', lbl:'ZeroTangle version',  f:v=>tierBadge(v,ZTANGLE_TIERS)},
+  {k:'truedge',      lbl:'TruEdge edge clean',  f:v=>v?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'truedge_v',    lbl:'TruEdge version',     f:v=>tierBadge(v,TRUEDGE_TIERS)},
+  {k:'carpet_boost', lbl:'Carpet boost',        f:fYN},
+  {k:'ai_stain',     lbl:'AI stain detect',     f:fYN},
+  {k:'video',        lbl:'Camera',              f:fYN},
+  {k:'camera_res',   lbl:'Camera resolution',   f:v=>v||'—'},
+  {k:'yiko_tier',    lbl:'YIKO voice',          f:v=>v||'—'},
+  {sec:'Mopping'},
+  {k:'mop_type',     lbl:'Mop system',          f:v=>tierBadge(v,MOP_TIERS)},
+  {k:'mop_rpm',      lbl:'Mop roller RPM',      f:v=>v?v+' RPM':'—',         hi:true},
+  {k:'mop_diameter_mm',lbl:'Mop Ø',            f:v=>fNum(v,'mm'),            hi:true},
+  {k:'mop_lift_mm',  lbl:'Auto mop lift',       f:v=>fNum(v,'mm'),            hi:true},
+  {k:'mop_boost',    lbl:'Mop pressurisation',  f:fYN},
+  {k:'hot_water',    lbl:'Hot water floor mop', f:fYN},
+  {k:'warm_wash',    lbl:'Warm station wash',   f:fYN},
+  {k:'fresh_flow',   lbl:'Fresh-Flow wash',     f:v=>v?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'mopping_area', lbl:'Mop area (tank m²)',  f:v=>fNum(v,'m²'),            hi:true},
+  {sec:'Station'},
+  {k:'auto_dust',    lbl:'Auto dust collect',   f:fYN},
+  {k:'dust_bag_l',   lbl:'Dust bag capacity',   f:v=>fNum(v,'L',1),           hi:true},
+  {k:'hot_dry',      lbl:'Hot air dry',         f:fYN},
+  {k:'hot_dry_c',    lbl:'Hot dry temp',        f:v=>v?v+'°C':'—',            hi:true},
+  {k:'solution_auto',lbl:'Auto clean solution', f:v=>v?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'station_clean',lbl:'Station self-clean',  f:fYN},
+  {sec:'Physical & Dustbin'},
+  {k:'dust_bin_ml',  lbl:'Dust bin',            f:v=>fNum(v,'ml'),            hi:true},
+  {k:'filter_level', lbl:'Filter level',        f:v=>tierBadge(v,FILTER_TIERS)},
+  {k:'robot_weight_kg',lbl:'Robot weight',      f:v=>fNum(v,'kg',2),          hi:false},
+  {k:'step_height_mm',lbl:'Step climb (mop)',   f:v=>fNum(v,'mm'),            hi:true},
+  {k:'triple_lift',  lbl:'Triple Lift',         f:v=>v?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'carpet_care',  lbl:'Carpet Care mode',    f:v=>v?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'re_mop',       lbl:'Auto re-mop',         f:v=>v?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'bagless',      lbl:'Bagless (no bags)',    f:v=>v?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'powerboost_pct',lbl:'Flash-charge rate',  f:v=>v?v+'%/3min':'—',        hi:true},
+  {k:'truepass',     lbl:'TruePass crossing',   f:v=>v?'<span class="y">✓</span>':'<span class="n">✗</span>'},
+  {k:'robot_dims',   lbl:'Robot dims W×D×H',    f:v=>v||'—'},
+  {k:'charge_method',lbl:'Charging method',     f:v=>v||'—'},
+];
+
+function renderCompare(){
+  const el=document.getElementById('view-compare');
+  const cmp=MODELS.filter(m=>S.selected.has(m.name));
+  if(cmp.length<2){
+    el.innerHTML=`<div class="cmp-empty"><p>Select 2 or more models from Grid or List, then return here.</p><p style="color:var(--text3);font-size:11px;margin-top:8px">Currently selected: ${S.selected.size}</p></div>`;
+    return;
+  }
+  const bmap={};
+  CR.forEach(r=>{if(r.k&&r.hi!=null)bmap[r.k]=getBests(cmp,r.k,r.hi)});
+  const heads=cmp.map(m=>{
+    const col=fc(m.family);
+    const priceStr=m.price_aud?`<br><span style="color:#fbbf24;font-size:11px;font-weight:500">${fAud(m.price_aud)}</span><span style="color:var(--text3);font-size:10px"> ${m.price_retailer||''}</span>`:'';
+    const u=RETAILER_URLS[m.name]||{};const p=PRICES[m.name]||{};
+    const buyLinks=Object.entries(u).map(([r,url])=>`<a class="lt-a" href="${url}" target="_blank" style="font-size:9px">${RETAILER_LABELS[r]||r} ${fAud(p[r])}</a>`).join(' · ');
+    const spL=`<a class="lt-a" href="${m.spec_url}" target="_blank" style="font-size:9px">Specs ↗</a>`;
+    const warningStr=m.name==='X8 PRO OMNI'?`<br><span style="color:#ff7070;font-size:9px">⚠ US-spec (110V) — no official AU listing. Check warranty.</span>`:'';
+    return`<th class="mc"><span class="fam-dot" style="background:${col}"></span>${m.name}<span style="color:var(--text2);font-size:10px;font-family:var(--mono);margin-left:6px">${m.release_year||''}</span>${priceStr}${warningStr}<br><span style="font-size:9px;color:var(--text3)">${buyLinks} · ${spL}</span></th>`;
+  }).join('');
+  const rows=CR.map(r=>{
+    if(r.sec)return`<tr class="sh"><td colspan="${cmp.length+1}">${r.sec}</td></tr>`;
+    const{best,worst}=bmap[r.k]||{};
+    const cells=cmp.map(m=>{
+      const v=m[r.k];
+      const html=r.f(v,m);
+      let cls='v';
+      if(r.hi!=null&&v!=null&&cmp.length>1){if(v===best)cls+=' best';else if(v===worst)cls+=' worst'}
+      if(v==null&&typeof v!=='boolean')cls+=' na';
+      return`<td class="${cls}">${html}</td>`;
+    }).join('');
+    return`<tr><td>${r.lbl}</td>${cells}</tr>`;
+  }).join('');
+  el.innerHTML=`<table class="cmp-table"><thead><tr><th></th>${heads}</tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+/* ── VIEW SWITCHING ─────────────────────────── */
+function showView(v){
+  S.view=v;
+  document.getElementById('view-grid').style.display=v==='grid'?'grid':'none';
+  document.getElementById('view-list').style.display=v==='list'?'block':'none';
+  document.getElementById('view-compare').style.display=v==='compare'?'block':'none';
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t.dataset.view===v));
+  if(v==='grid')renderGrid();
+  else if(v==='list')renderList();
+  else renderCompare();
+}
+
+function syncSort(){
+  // Update sortbar buttons (single-sort reference)
+  const pk=S.sorts[0]?.key;const pa=S.sorts[0]?.asc;
+  document.querySelectorAll('.srt').forEach(b=>{
+    const a=b.dataset.sort===pk;
+    b.classList.toggle('active',a);b.classList.toggle('asc',a&&pa);
+  });
+}
+
+/* ── BINDINGS ───────────────────────────────── */
+document.querySelectorAll('.tab').forEach(t=>t.addEventListener('click',()=>showView(t.dataset.view)));
+document.querySelectorAll('.pill[data-fam]').forEach(p=>p.addEventListener('click',()=>{
+  document.querySelectorAll('.pill[data-fam]').forEach(x=>x.classList.remove('active'));
+  p.classList.add('active');S.family=p.dataset.fam;
+  if(S.view==='grid')renderGrid();else if(S.view==='list')renderList();
+}));
+// Sortbar sets primary sort only
+document.querySelectorAll('.srt').forEach(b=>b.addEventListener('click',()=>{
+  const k=b.dataset.sort;
+  const cur=S.sorts.find(s=>s.key===k);
+  S.sorts=[{key:k,asc:S.sorts.length===1&&cur?!cur.asc:false}];
+  syncSort();if(S.view==='grid')renderGrid();else if(S.view==='list')renderList();
+}));
+document.getElementById('btn-go-compare').addEventListener('click',()=>showView('compare'));
+document.getElementById('btn-clr').addEventListener('click',()=>{
+  S.selected.clear();
+  document.getElementById('sel-n').textContent='0';
+  document.getElementById('btn-go-compare').disabled=true;
+  if(S.view==='grid')renderGrid();else if(S.view==='list')renderList();
+});
+
+/* ── INIT ───────────────────────────────────── */
+showView('grid');
+</script>
+</body>
+</html>
